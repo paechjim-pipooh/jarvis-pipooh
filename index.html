@@ -58,7 +58,7 @@
         .settings-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron', sans-serif; color: var(--primary-mint); border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; margin-bottom: 20px; }
         .input-group { margin-bottom: 15px; }
         .input-group label { font-size: 0.8rem; color: var(--primary-cyan); display: block; margin-bottom: 5px; }
-        .input-group select { width: 100%; padding: 10px; background: rgba(6, 15, 25, 0.8); border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; outline: none; }
+        .input-group input, .input-group select { width: 100%; padding: 10px; background: rgba(6, 15, 25, 0.8); border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; outline: none; }
     </style>
 </head>
 <body>
@@ -84,7 +84,7 @@
         </div>
 
         <div class="center-mic-container">
-            <button class="mic-btn" id="micBtn" onclick="toggleVoiceRecognition()">
+            <button class="mic-btn" id="micBtn" onclick="testAndSpeak()">
                 <i class="fas fa-microphone"></i>
             </button>
         </div>
@@ -107,7 +107,7 @@
 
         <div class="bottom-nav">
             <div class="nav-item active"><i class="fas fa-home"></i><span>หน้าหลัก</span></div>
-            <div class="nav-item" onclick="toggleVoiceRecognition()"><i class="fas fa-comment-dots"></i><span>สนทนา</span></div>
+            <div class="nav-item" onclick="testAndSpeak()"><i class="fas fa-comment-dots"></i><span>สนทนา</span></div>
             <div class="nav-item" onclick="openSettings()"><i class="fas fa-sliders-h"></i><span>ตั้งค่า</span></div>
         </div>
 
@@ -116,214 +116,4 @@
                 <h3>SETTINGS</h3>
                 <i class="fas fa-times" style="cursor: pointer;" onclick="closeSettings()"></i>
             </div>
-            <div class="input-group">
-                <label>เลือกเสียงโต้ตอบ (VOICE SELECT):</label>
-                <select id="voiceSelect" onchange="changeVoice()"></select>
-            </div>
-            <button style="padding: 10px; background: var(--primary-mint); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; width: 100%;" onclick="closeSettings()">ปิดหน้าต่าง</button>
-        </div>
-    </div>
-
-    <script>
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH');
-            document.getElementById('date').innerText = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        function renderCalendar() {
-            const grid = document.getElementById('calendarGrid');
-            const now = new Date();
-            const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-            grid.innerHTML = days.map(d => `<div class="cal-day-head">${d}</div>`).join('');
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-            const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-
-            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div></div>`; }
-            for (let day = 1; day <= totalDays; day++) {
-                const isToday = day === now.getDate() ? 'active' : '';
-                grid.innerHTML += `<div class="cal-date ${isToday}">${day}</div>`;
-            }
-        }
-        renderCalendar();
-
-        const starCanvas = document.getElementById('space-stars');
-        const starCtx = starCanvas.getContext('2d');
-        let stars = [];
-
-        function resizeStarCanvas() {
-            starCanvas.width = starCanvas.parentElement.clientWidth;
-            starCanvas.height = starCanvas.parentElement.clientHeight;
-        }
-        resizeStarCanvas();
-
-        for (let i = 0; i < 60; i++) {
-            stars.push({
-                x: Math.random() * starCanvas.width,
-                y: Math.random() * starCanvas.height,
-                size: Math.random() * 1.5,
-                alpha: Math.random(),
-                speed: 0.005 + Math.random() * 0.01
-            });
-        }
-
-        function drawStars() {
-            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-            stars.forEach(star => {
-                star.alpha += star.speed;
-                if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
-                starCtx.fillStyle = `rgba(0, 255, 204, ${Math.abs(star.alpha)})`;
-                starCtx.beginPath();
-                starCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                starCtx.fill();
-            });
-            requestAnimationFrame(drawStars);
-        }
-        drawStars();
-
-        const container = document.getElementById('hologram-canvas');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-
-        const geometry = new THREE.SphereGeometry(2.2, 40, 40);
-        const count = geometry.attributes.position.count;
-        const colors = [];
-        const colorMint = new THREE.Color('#00ffcc');
-        const colorCyan = new THREE.Color('#00d8ff');
-
-        for (let i = 0; i < count; i++) {
-            const mixedColor = Math.random() > 0.5 ? colorMint : colorCyan;
-            colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
-        }
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-
-        const material = new THREE.PointsMaterial({ size: 0.035, vertexColors: true, transparent: true, opacity: 0.85 });
-        const orbSphere = new THREE.Points(geometry, material);
-        scene.add(orbSphere);
-        camera.position.z = 5.5;
-
-        function animate3D() {
-            requestAnimationFrame(animate3D);
-            orbSphere.rotation.y += 0.005;
-            orbSphere.rotation.x += 0.002;
-            renderer.render(scene, camera);
-        }
-        animate3D();
-
-        let recognition;
-        let isListening = false;
-        let voices = [];
-        let selectedVoiceIndex = 0;
-
-        function loadVoices() {
-            voices = window.speechSynthesis.getVoices();
-            const voiceSelect = document.getElementById('voiceSelect');
-            if (!voiceSelect) return;
-            
-            let thaiIndex = voices.findIndex(v => v.lang.includes('th') || v.lang.includes('th-TH'));
-            if (thaiIndex !== -1) selectedVoiceIndex = thaiIndex;
-
-            voiceSelect.innerHTML = '';
-            voices.forEach((voice, i) => {
-                if (voice.lang.includes('th') || voice.lang.includes('en')) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    option.textContent = `${voice.name} (${voice.lang})`;
-                    if (i === selectedVoiceIndex) option.selected = true;
-                    voiceSelect.appendChild(option);
-                }
-            });
-        }
-
-        if (typeof window.speechSynthesis !== 'undefined') {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-            loadVoices();
-        }
-
-        function changeVoice() {
-            const voiceSelect = document.getElementById('voiceSelect');
-            if (voiceSelect) {
-                selectedVoiceIndex = voiceSelect.value;
-                speakText("เปลี่ยนเสียงเรียบร้อยครับ คุณพิภู");
-            }
-        }
-
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.lang = 'th-TH';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            recognition.onresult = function(event) {
-                const text = event.results[0][0].transcript;
-                processCommand(text);
-            };
-
-            recognition.onend = function() {
-                isListening = false;
-                document.getElementById('micBtn').classList.remove('listening');
-            };
-        }
-
-        function toggleVoiceRecognition() {
-            if (!recognition) {
-                alert("เบราว์เซอร์นี้ไม่รองรับการสั่งงานด้วยเสียง แนะนำให้ใช้งานผ่าน Safari บน iOS ครับ");
-                return;
-            }
-            if (!isListening) {
-                try {
-                    recognition.start();
-                    isListening = true;
-                    document.getElementById('micBtn').classList.add('listening');
-                } catch (e) { console.error(e); }
-            } else {
-                recognition.stop();
-                isListening = false;
-                document.getElementById('micBtn').classList.remove('listening');
-            }
-        }
-
-        function processCommand(text) {
-            const cmd = text.toLowerCase();
-            if (cmd.includes('เปิดยูทูป') || cmd.includes('youtube')) {
-                speakText("รับทราบครับ กำลังเปิดยูทูปให้คุณพิภูครับ");
-                window.open('https://www.youtube.com', '_blank');
-            } else if (cmd.includes('เวลา') || cmd.includes('กี่โมง')) {
-                const timeStr = new Date().toLocaleTimeString('th-TH');
-                speakText(`ขณะนี้เวลา ${timeStr} ครับ คุณพิภู`);
-            } else if (cmd.includes('สวัสดี') || cmd.includes('ทักทาย')) {
-                speakText("สวัสดีครับคุณพิภู ระบบจาวิสพร้อมปฏิบัติงานครับ");
-            } else {
-                speakText(`รับทราบคำสั่งของคุณพิภูครับ คุณสั่งว่า: ${text}`);
-            }
-        }
-
-        function speakText(text) {
-            if (typeof window.speechSynthesis === 'undefined') return;
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            if (voices.length > 0 && voices[selectedVoiceIndex]) {
-                utter.voice = voices[selectedVoiceIndex];
-            }
-            utter.lang = 'th-TH';
-            utter.rate = 1.0;
-            utter.pitch = 1.0;
-            window.speechSynthesis.speak(utter);
-        }
-
-        function openSettings() { 
-            document.getElementById('settingsModal').style.display = 'flex'; 
-            loadVoices(); 
-        }
-        function closeSettings() { 
-            document.getElementById('settingsModal').style.display = 'none'; 
-        }
-    </script>
-</body>
-</html>
+            <div class="
