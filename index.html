@@ -1,239 +1,233 @@
-<script>
-    // --- 1. Real-Time Clock & Dynamic Calendar Generator ---
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH');
-        document.getElementById('date').innerText = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    function renderCalendar() {
-        const grid = document.getElementById('calendarGrid');
-        const now = new Date();
-        const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-        grid.innerHTML = days.map(d => `<div class="cal-day-head">${d}</div>`).join('');
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-        const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-
-        for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div></div>`; }
-        for (let day = 1; day <= totalDays; day++) {
-            const isToday = day === now.getDate() ? 'active' : '';
-            grid.innerHTML += `<div class="cal-date ${isToday}">${day}</div>`;
-        }
-    }
-    renderCalendar();
-
-    // --- 2. Deep Space Stars Canvas ---
-    const starCanvas = document.getElementById('space-stars');
-    const starCtx = starCanvas.getContext('2d');
-    let stars = [];
-
-    function resizeStarCanvas() {
-        starCanvas.width = starCanvas.parentElement.clientWidth;
-        starCanvas.height = starCanvas.parentElement.clientHeight;
-    }
-    resizeStarCanvas();
-
-    for (let i = 0; i < 60; i++) {
-        stars.push({
-            x: Math.random() * starCanvas.width,
-            y: Math.random() * starCanvas.height,
-            size: Math.random() * 1.5,
-            alpha: Math.random(),
-            speed: 0.005 + Math.random() * 0.01
-        });
-    }
-
-    function drawStars() {
-        starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-        stars.forEach(star => {
-            star.alpha += star.speed;
-            if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
-            starCtx.fillStyle = `rgba(0, 255, 204, ${Math.abs(star.alpha)})`;
-            starCtx.beginPath();
-            starCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-            starCtx.fill();
-        });
-        requestAnimationFrame(drawStars);
-    }
-    drawStars();
-
-    // --- 3. Three.js 3D Sphere ---
-    const container = document.getElementById('hologram-canvas');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    container.appendChild(renderer.domElement);
-
-    const geometry = new THREE.SphereGeometry(2.2, 40, 40);
-    const count = geometry.attributes.position.count;
-    const colors = [];
-    const colorMint = new THREE.Color('#00ffcc');
-    const colorCyan = new THREE.Color('#00d8ff');
-
-    for (let i = 0; i < count; i++) {
-        const mixedColor = Math.random() > 0.5 ? colorMint : colorCyan;
-        colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
-    }
-    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-
-    const material = new THREE.PointsMaterial({ size: 0.035, vertexColors: true, transparent: true, opacity: 0.85 });
-    const orbSphere = new THREE.Points(geometry, material);
-    scene.add(orbSphere);
-    camera.position.z = 5.5;
-
-    function animate3D() {
-        requestAnimationFrame(animate3D);
-        orbSphere.rotation.y += 0.005;
-        orbSphere.rotation.x += 0.002;
-        renderer.render(scene, camera);
-    }
-    animate3D();
-
-    // --- 4. Voice Recognition & Interactive Conversation System ---
-    let recognition;
-    let isListening = false;
-    let voices = [];
-    let selectedVoiceIndex = 0;
-
-    function loadVoices() {
-        voices = window.speechSynthesis.getVoices();
-        const voiceSelect = document.getElementById('voiceSelect');
-        if (!voiceSelect) return;
-        voiceSelect.innerHTML = '';
-        voices.forEach((voice, i) => {
-            if (voice.lang.includes('th') || voice.lang.includes('en')) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = `${voice.name} (${voice.lang})`;
-                if (voice.lang.includes('th')) option.selected = true;
-                voiceSelect.appendChild(option);
-            }
-        });
-    }
-
-    if (typeof window.speechSynthesis !== 'undefined') {
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-        loadVoices();
-    }
-
-    function changeVoice() {
-        const voiceSelect = document.getElementById('voiceSelect');
-        if (voiceSelect) {
-            selectedVoiceIndex = voiceSelect.value;
-            speakText("ระบบเสียงพร้อมใช้งานครับ คุณพิภู");
-        }
-    }
-
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.lang = 'th-TH';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-
-        recognition.onresult = function(event) {
-            const text = event.results[0][0].transcript;
-            processCommand(text);
-        };
-
-        recognition.onerror = function(event) {
-            console.error("Speech recognition error", event.error);
-            isListening = false;
-            document.getElementById('micBtn').classList.remove('listening');
-        };
-
-        recognition.onend = function() {
-            isListening = false;
-            document.getElementById('micBtn').classList.remove('listening');
-        };
-    }
-
-    function toggleVoiceRecognition() {
-        if (!recognition) {
-            alert("เบราว์เซอร์นี้ไม่รองรับการสั่งงานด้วยเสียง แนะนำให้ใช้งานผ่าน Safari บน iOS หรือ Chrome ครับ");
-            return;
-        }
-        if (!isListening) {
-            try {
-                recognition.start();
-                isListening = true;
-                document.getElementById('micBtn').classList.add('listening');
-            } catch (e) {
-                console.error(e);
-            }
-        } else {
-            recognition.stop();
-            isListening = false;
-            document.getElementById('micBtn').classList.remove('listening');
-        }
-    }
-
-    // สมองกลประมวลผลคำสั่งเสียงโต้ตอบ
-    function processCommand(text) {
-        const cmd = text.toLowerCase();
-        
-        if (cmd.includes('เปิดยูทูป') || cmd.includes('youtube')) {
-            speakText("รับทราบครับ กำลังเปิดยูทูปให้คุณพิภูครับ");
-            window.open('https://www.youtube.com', '_blank');
-        } else if (cmd.includes('เวลา') || cmd.includes('กี่โมง')) {
-            const timeStr = new Date().toLocaleTimeString('th-TH');
-            speakText(`ขณะนี้เวลา ${timeStr} ครับ คุณพิภู`);
-        } else if (cmd.includes('สวัสดี') || cmd.includes('ทักทาย')) {
-            speakText("สวัสดีครับคุณพิภู ระบบจาวิสพร้อมปฏิบัติงานครับ มีอะไรให้ผมช่วยเหลือไหมครับ");
-        } else {
-            speakText(`รับทราบคำสั่งของคุณพิภูครับ คุณสั่งว่า: ${text}`);
-        }
-    }
-
-    // ระบบสังเคราะห์เสียงพูดออกลำโพง
-    function speakText(text) {
-        if (typeof window.speechSynthesis === 'undefined') return;
-        window.speechSynthesis.cancel(); // หยุดเสียงเก่าก่อนพูดใหม่
-        
-        const utter = new SpeechSynthesisUtterance(text);
-        if (voices.length > 0 && voices[selectedVoiceIndex]) {
-            utter.voice = voices[selectedVoiceIndex];
-        }
-        utter.lang = 'th-TH';
-        utter.rate = 1.0;
-        utter.pitch = 1.0;
-        
-        window.speechSynthesis.speak(utter);
-    }
-
-    function openSettings() { 
-        document.getElementById('settingsModal').style.display = 'flex'; 
-        loadVoices(); 
-    }
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. - AI Assistant for PIPOOH</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    function closeSettings() { 
-        document.getElementById('settingsModal').style.display = 'none'; 
-    }
-</script>// โหลดรายการเสียงและเลือกเสียงภาษาไทยอัตโนมัติทันที
-let voices = [];
-let selectedVoiceIndex = 0;
-
-function loadVoices() {
-    voices = window.speechSynthesis.getVoices();
-    const voiceSelect = document.getElementById('voiceSelect');
-    
-    if (voices.length > 0) {
-        // ค้นหาเสียงภาษาไทยตัวแรกในระบบ (หรือเสียง Siri ไทย ถ้ามี)
-        let thaiIndex = voices.findIndex(v => v.lang.includes('th') || v.lang.includes('th-TH'));
-        
-        if (thaiIndex !== -1) {
-            selectedVoiceIndex = thaiIndex; // ล็อคเป้าใช้เสียงไทยทันที
-        } else {
-            // ถ้าหาไม่เจอ ให้ใช้เสียงสำเนียงอังกฤษมาตรฐาน
-            let enIndex = voices.findIndex(v => v.lang.includes('en-US'));
-            if (enIndex !== -1) selectedVoiceIndex = enIndex;
+    <style>
+        :root {
+            --bg-color: #020408;
+            --primary-mint: #00ffcc;
+            --primary-cyan: #00d8ff;
+            --glow-mint: rgba(0, 255, 204, 0.4);
+            --glow-cyan: rgba(0, 216, 255, 0.4);
+            --panel-bg: rgba(6, 15, 25, 0.85);
+            --panel-border: rgba(0, 255, 204, 0.25);
+            --text-main: #ffffff;
+            --text-muted: #8ab4f8;
         }
 
-        // อัปเดตรายการในหน้า Settings เผื่อต้องการเปลี่ยน
-        if (voiceSelect) {
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        html, body { width: 100%; height: 100%; background-color: var(--bg-color) !important; font-family: 'Prompt', 'Orbitron', sans-serif; color: var(--text-main); overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        .app-viewport { width: 100%; max-width: 430px; height: 100%; max-height: 932px; background: radial-gradient(circle at center, #051329 0%, #020408 100%); border: 1px solid rgba(0, 255, 204, 0.2); box-shadow: 0 0 50px rgba(0, 255, 204, 0.15); position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        #space-stars, #hologram-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #space-stars { z-index: 1; pointer-events: none; }
+        #hologram-canvas { z-index: 2; }
+        .header-bar { position: relative; z-index: 10; padding: 15px 20px 10px 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(180deg, rgba(2, 4, 8, 0.9) 0%, rgba(2, 4, 8, 0) 100%); }
+        .system-subtext { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; color: var(--primary-cyan); letter-spacing: 2px; }
+        .user-greeting { font-size: 1.25rem; font-weight: 600; color: #ffffff; text-shadow: 0 0 10px var(--glow-mint); }
+        .digital-clock { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--primary-mint); text-shadow: 0 0 12px var(--glow-mint); line-height: 1; }
+        .digital-date { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; text-align: right; }
+        .orb-status-text { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); z-index: 5; text-align: center; pointer-events: none; }
+        .orb-title { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 900; letter-spacing: 6px; color: #ffffff; text-shadow: 0 0 20px var(--primary-mint), 0 0 40px var(--primary-cyan); }
+        .orb-subtitle { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; letter-spacing: 3px; color: var(--primary-cyan); margin-top: 5px; opacity: 0.8; }
+        .center-mic-container { position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .mic-btn { width: 65px; height: 65px; border-radius: 50%; background: radial-gradient(circle, rgba(0,255,204,0.3) 0%, rgba(6,15,25,0.8) 100%); border: 2px solid var(--primary-mint); color: var(--primary-mint); font-size: 1.5rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 0 25px var(--glow-mint); transition: all 0.3s ease; }
+        .mic-btn:hover, .mic-btn.listening { transform: scale(1.1); background: var(--primary-mint); color: #000; box-shadow: 0 0 45px var(--primary-mint); }
+        .widgets-section { position: absolute; bottom: 75px; left: 0; width: 100%; padding: 0 15px; z-index: 10; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .widget-card { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 12px; backdrop-filter: blur(12px); box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.05); }
+        .widget-header { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--primary-cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(0, 216, 255, 0.15); padding-bottom: 4px; }
+        .profile-container { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .avatar-ring { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--primary-mint); padding: 3px; box-shadow: 0 0 15px var(--glow-mint); position: relative; margin-bottom: 6px; overflow: hidden; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top center; }
+        .profile-name { font-size: 0.85rem; font-weight: 600; color: #fff; }
+        .profile-badge { font-size: 0.6rem; color: var(--primary-mint); background: rgba(0, 255, 204, 0.1); padding: 2px 8px; border-radius: 10px; margin-top: 2px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.6rem; }
+        .cal-day-head { color: var(--primary-cyan); font-weight: 600; padding-bottom: 2px; }
+        .cal-date { color: #a0c4e8; padding: 3px 0; border-radius: 4px; }
+        .cal-date.active { background: var(--primary-mint); color: #000; font-weight: bold; box-shadow: 0 0 8px var(--primary-mint); }
+        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 65px; background: rgba(2, 4, 8, 0.95); border-top: 1px solid var(--panel-border); z-index: 20; display: flex; justify-content: space-around; align-items: center; padding: 0 10px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.65rem; cursor: pointer; transition: 0.3s; }
+        .nav-item i { font-size: 1.2rem; margin-bottom: 3px; }
+        .nav-item.active, .nav-item:hover { color: var(--primary-mint); text-shadow: 0 0 10px var(--glow-mint); }
+        .settings-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 4, 8, 0.92); z-index: 30; display: none; flex-direction: column; padding: 30px 20px; backdrop-filter: blur(15px); }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron', sans-serif; color: var(--primary-mint); border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { font-size: 0.8rem; color: var(--primary-cyan); display: block; margin-bottom: 5px; }
+        .input-group select { width: 100%; padding: 10px; background: rgba(6, 15, 25, 0.8); border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; outline: none; }
+    </style>
+</head>
+<body>
+
+    <div class="app-viewport">
+        <canvas id="space-stars"></canvas>
+        <div id="hologram-canvas"></div>
+
+        <div class="header-bar">
+            <div>
+                <span class="system-subtext">J.A.R.V.I.S. SYSTEM V5.2</span>
+                <div class="user-greeting">สวัสดีครับ คุณ PIPOOH</div>
+            </div>
+            <div>
+                <div class="digital-clock" id="clock">00:00:00</div>
+                <div class="digital-date" id="date">--/--/----</div>
+            </div>
+        </div>
+
+        <div class="orb-status-text">
+            <div class="orb-title">J.A.R.V.I.S.</div>
+            <div class="orb-subtitle">NEURAL AI MATRIX</div>
+        </div>
+
+        <div class="center-mic-container">
+            <button class="mic-btn" id="micBtn" onclick="toggleVoiceRecognition()">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+
+        <div class="widgets-section">
+            <div class="widget-card profile-container">
+                <div class="widget-header"><i class="fas fa-user-shield"></i> OPERATOR</div>
+                <div class="avatar-ring">
+                    <img src="S__67846157.jpg" alt="MR. PIPOOH" class="avatar-img" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop'">
+                </div>
+                <div class="profile-name">MR. PIPOOH</div>
+                <div class="profile-badge">AUTHORIZED CLASS-A</div>
+            </div>
+
+            <div class="widget-card">
+                <div class="widget-header"><i class="fas fa-calendar-alt"></i> CALENDAR</div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active"><i class="fas fa-home"></i><span>หน้าหลัก</span></div>
+            <div class="nav-item" onclick="toggleVoiceRecognition()"><i class="fas fa-comment-dots"></i><span>สนทนา</span></div>
+            <div class="nav-item" onclick="openSettings()"><i class="fas fa-sliders-h"></i><span>ตั้งค่า</span></div>
+        </div>
+
+        <div class="settings-modal" id="settingsModal">
+            <div class="settings-header">
+                <h3>SETTINGS</h3>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="closeSettings()"></i>
+            </div>
+            <div class="input-group">
+                <label>เลือกเสียงโต้ตอบ (VOICE SELECT):</label>
+                <select id="voiceSelect" onchange="changeVoice()"></select>
+            </div>
+            <button style="padding: 10px; background: var(--primary-mint); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; width: 100%;" onclick="closeSettings()">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH');
+            document.getElementById('date').innerText = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const now = new Date();
+            const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+            grid.innerHTML = days.map(d => `<div class="cal-day-head">${d}</div>`).join('');
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+            const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div></div>`; }
+            for (let day = 1; day <= totalDays; day++) {
+                const isToday = day === now.getDate() ? 'active' : '';
+                grid.innerHTML += `<div class="cal-date ${isToday}">${day}</div>`;
+            }
+        }
+        renderCalendar();
+
+        const starCanvas = document.getElementById('space-stars');
+        const starCtx = starCanvas.getContext('2d');
+        let stars = [];
+
+        function resizeStarCanvas() {
+            starCanvas.width = starCanvas.parentElement.clientWidth;
+            starCanvas.height = starCanvas.parentElement.clientHeight;
+        }
+        resizeStarCanvas();
+
+        for (let i = 0; i < 60; i++) {
+            stars.push({
+                x: Math.random() * starCanvas.width,
+                y: Math.random() * starCanvas.height,
+                size: Math.random() * 1.5,
+                alpha: Math.random(),
+                speed: 0.005 + Math.random() * 0.01
+            });
+        }
+
+        function drawStars() {
+            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+            stars.forEach(star => {
+                star.alpha += star.speed;
+                if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
+                starCtx.fillStyle = `rgba(0, 255, 204, ${Math.abs(star.alpha)})`;
+                starCtx.beginPath();
+                starCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                starCtx.fill();
+            });
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        const container = document.getElementById('hologram-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        const geometry = new THREE.SphereGeometry(2.2, 40, 40);
+        const count = geometry.attributes.position.count;
+        const colors = [];
+        const colorMint = new THREE.Color('#00ffcc');
+        const colorCyan = new THREE.Color('#00d8ff');
+
+        for (let i = 0; i < count; i++) {
+            const mixedColor = Math.random() > 0.5 ? colorMint : colorCyan;
+            colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({ size: 0.035, vertexColors: true, transparent: true, opacity: 0.85 });
+        const orbSphere = new THREE.Points(geometry, material);
+        scene.add(orbSphere);
+        camera.position.z = 5.5;
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            orbSphere.rotation.y += 0.005;
+            orbSphere.rotation.x += 0.002;
+            renderer.render(scene, camera);
+        }
+        animate3D();
+
+        let recognition;
+        let isListening = false;
+        let voices = [];
+        let selectedVoiceIndex = 0;
+
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById('voiceSelect');
+            if (!voiceSelect) return;
+            
+            let thaiIndex = voices.findIndex(v => v.lang.includes('th') || v.lang.includes('th-TH'));
+            if (thaiIndex !== -1) selectedVoiceIndex = thaiIndex;
+
             voiceSelect.innerHTML = '';
             voices.forEach((voice, i) => {
                 if (voice.lang.includes('th') || voice.lang.includes('en')) {
@@ -245,19 +239,91 @@ function loadVoices() {
                 }
             });
         }
-    }
-}
 
-if (typeof window.speechSynthesis !== 'undefined') {
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
-}
+        if (typeof window.speechSynthesis !== 'undefined') {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+        }
 
-// ฟังก์ชันเปลี่ยนเสียงเมื่อผู้ใช้เลือกเองใน Settings
-function changeVoice() {
-    const voiceSelect = document.getElementById('voiceSelect');
-    if (voiceSelect) {
-        selectedVoiceIndex = voiceSelect.value;
-        speakText("เปลี่ยนเสียงเรียบร้อยครับ คุณพิภู");
-    }
-}
+        function changeVoice() {
+            const voiceSelect = document.getElementById('voiceSelect');
+            if (voiceSelect) {
+                selectedVoiceIndex = voiceSelect.value;
+                speakText("เปลี่ยนเสียงเรียบร้อยครับ คุณพิภู");
+            }
+        }
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'th-TH';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = function(event) {
+                const text = event.results[0][0].transcript;
+                processCommand(text);
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('micBtn').classList.remove('listening');
+            };
+        }
+
+        function toggleVoiceRecognition() {
+            if (!recognition) {
+                alert("เบราว์เซอร์นี้ไม่รองรับการสั่งงานด้วยเสียง แนะนำให้ใช้งานผ่าน Safari บน iOS ครับ");
+                return;
+            }
+            if (!isListening) {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    document.getElementById('micBtn').classList.add('listening');
+                } catch (e) { console.error(e); }
+            } else {
+                recognition.stop();
+                isListening = false;
+                document.getElementById('micBtn').classList.remove('listening');
+            }
+        }
+
+        function processCommand(text) {
+            const cmd = text.toLowerCase();
+            if (cmd.includes('เปิดยูทูป') || cmd.includes('youtube')) {
+                speakText("รับทราบครับ กำลังเปิดยูทูปให้คุณพิภูครับ");
+                window.open('https://www.youtube.com', '_blank');
+            } else if (cmd.includes('เวลา') || cmd.includes('กี่โมง')) {
+                const timeStr = new Date().toLocaleTimeString('th-TH');
+                speakText(`ขณะนี้เวลา ${timeStr} ครับ คุณพิภู`);
+            } else if (cmd.includes('สวัสดี') || cmd.includes('ทักทาย')) {
+                speakText("สวัสดีครับคุณพิภู ระบบจาวิสพร้อมปฏิบัติงานครับ");
+            } else {
+                speakText(`รับทราบคำสั่งของคุณพิภูครับ คุณสั่งว่า: ${text}`);
+            }
+        }
+
+        function speakText(text) {
+            if (typeof window.speechSynthesis === 'undefined') return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            if (voices.length > 0 && voices[selectedVoiceIndex]) {
+                utter.voice = voices[selectedVoiceIndex];
+            }
+            utter.lang = 'th-TH';
+            utter.rate = 1.0;
+            utter.pitch = 1.0;
+            window.speechSynthesis.speak(utter);
+        }
+
+        function openSettings() { 
+            document.getElementById('settingsModal').style.display = 'flex'; 
+            loadVoices(); 
+        }
+        function closeSettings() { 
+            document.getElementById('settingsModal').style.display = 'none'; 
+        }
+    </script>
+</body>
+</html>
