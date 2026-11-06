@@ -3,293 +3,1126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>J.A.R.V.I.S. - AI Assistant for PIPOOH</title>
+    <title>B.U.S. - AI ASSISTANT FOR PIPOOH</title>
+    
+    <!-- Tailwind CSS, Three.js & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #020408;
-            --primary-mint: #00ffcc;
+            --bg-dark: #020813;
             --primary-cyan: #00d8ff;
-            --glow-mint: rgba(0, 255, 204, 0.4);
-            --glow-cyan: rgba(0, 216, 255, 0.4);
-            --panel-bg: rgba(6, 15, 25, 0.85);
-            --panel-border: rgba(0, 255, 204, 0.25);
+            --primary-mint: #00ffcc;
+            --glow-cyan: rgba(0, 216, 255, 0.5);
+            --glow-mint: rgba(0, 255, 204, 0.5);
+            --panel-bg: rgba(5, 24, 46, 0.85);
+            --panel-border: rgba(0, 216, 255, 0.35);
             --text-main: #ffffff;
             --text-muted: #8ab4f8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-        html, body { width: 100%; height: 100%; background-color: var(--bg-color) !important; font-family: 'Prompt', 'Orbitron', sans-serif; color: var(--text-main); overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        .app-viewport { width: 100%; max-width: 430px; height: 100%; max-height: 932px; background: radial-gradient(circle at center, #051329 0%, #020408 100%); border: 1px solid rgba(0, 255, 204, 0.2); box-shadow: 0 0 50px rgba(0, 255, 204, 0.15); position: relative; display: flex; flex-direction: column; overflow: hidden; }
-        #space-stars, #hologram-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #space-stars { z-index: 1; pointer-events: none; }
-        #hologram-canvas { z-index: 2; }
-        .header-bar { position: relative; z-index: 10; padding: 15px 20px 10px 20px; display: flex; justify-content: space-between; align-items: flex-start; background: linear-gradient(180deg, rgba(2, 4, 8, 0.9) 0%, rgba(2, 4, 8, 0) 100%); }
-        .system-subtext { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; color: var(--primary-cyan); letter-spacing: 2px; }
-        .user-greeting { font-size: 1.25rem; font-weight: 600; color: #ffffff; text-shadow: 0 0 10px var(--glow-mint); }
-        .digital-clock { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--primary-mint); text-shadow: 0 0 12px var(--glow-mint); line-height: 1; }
-        .digital-date { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; text-align: right; }
-        .orb-status-text { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); z-index: 5; text-align: center; pointer-events: none; }
-        .orb-title { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 900; letter-spacing: 6px; color: #ffffff; text-shadow: 0 0 20px var(--primary-mint), 0 0 40px var(--primary-cyan); }
-        .orb-subtitle { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; letter-spacing: 3px; color: var(--primary-cyan); margin-top: 5px; opacity: 0.8; }
-        .center-mic-container { position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
-        .mic-btn { width: 65px; height: 65px; border-radius: 50%; background: radial-gradient(circle, rgba(0,255,204,0.3) 0%, rgba(6,15,25,0.8) 100%); border: 2px solid var(--primary-mint); color: var(--primary-mint); font-size: 1.5rem; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 0 25px var(--glow-mint); transition: all 0.3s ease; }
-        .mic-btn:hover, .mic-btn.listening { transform: scale(1.1); background: var(--primary-mint); color: #000; box-shadow: 0 0 45px var(--primary-mint); }
-        .widgets-section { position: absolute; bottom: 75px; left: 0; width: 100%; padding: 0 15px; z-index: 10; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .widget-card { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 16px; padding: 12px; backdrop-filter: blur(12px); box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.05); }
-        .widget-header { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--primary-cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(0, 216, 255, 0.15); padding-bottom: 4px; }
-        .profile-container { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .avatar-ring { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--primary-mint); padding: 3px; box-shadow: 0 0 15px var(--glow-mint); position: relative; margin-bottom: 6px; overflow: hidden; }
-        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: top center; }
-        .profile-name { font-size: 0.85rem; font-weight: 600; color: #fff; }
-        .profile-badge { font-size: 0.6rem; color: var(--primary-mint); background: rgba(0, 255, 204, 0.1); padding: 2px 8px; border-radius: 10px; margin-top: 2px; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.6rem; }
-        .cal-day-head { color: var(--primary-cyan); font-weight: 600; padding-bottom: 2px; }
-        .cal-date { color: #a0c4e8; padding: 3px 0; border-radius: 4px; }
-        .cal-date.active { background: var(--primary-mint); color: #000; font-weight: bold; box-shadow: 0 0 8px var(--primary-mint); }
-        .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 65px; background: rgba(2, 4, 8, 0.95); border-top: 1px solid var(--panel-border); z-index: 20; display: flex; justify-content: space-around; align-items: center; padding: 0 10px; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 0.65rem; cursor: pointer; transition: 0.3s; }
-        .nav-item i { font-size: 1.2rem; margin-bottom: 3px; }
-        .nav-item.active, .nav-item:hover { color: var(--primary-mint); text-shadow: 0 0 10px var(--glow-mint); }
-        .settings-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 4, 8, 0.92); z-index: 30; display: none; flex-direction: column; padding: 30px 20px; backdrop-filter: blur(15px); }
-        .settings-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Orbitron', sans-serif; color: var(--primary-mint); border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { font-size: 0.8rem; color: var(--primary-cyan); display: block; margin-bottom: 5px; }
-        .input-group input, .input-group select { width: 100%; padding: 10px; background: rgba(6, 15, 25, 0.8); border: 1px solid var(--panel-border); border-radius: 8px; color: #fff; outline: none; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            font-family: 'Prompt', 'Orbitron', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Sci-Fi Background Grid */
+        .cyber-grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, rgba(0, 216, 255, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 216, 255, 0.06) 1px, transparent 1px);
+            background-size: 26px 26px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* App Viewport Container */
+        .app-viewport {
+            width: 100%;
+            max-width: 440px;
+            height: 100%;
+            max-height: 932px;
+            background: radial-gradient(circle at 50% 30%, #081d3f 0%, #030d1d 60%, #01040a 100%);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 0 60px rgba(0, 216, 255, 0.3), inset 0 0 35px rgba(0, 216, 255, 0.15);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Canvas & Scanline Layer */
+        #space-stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .hud-scanline {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0, 216, 255, 0.025) 51%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        /* Sci-Fi Glass Panels with Cut Corners */
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(14px);
+            box-shadow: inset 0 0 15px rgba(0, 216, 255, 0.1), 0 6px 24px rgba(0, 0, 0, 0.5);
+            position: relative;
+            clip-path: polygon(
+                0 8px, 8px 0, 
+                calc(100% - 8px) 0, 100% 8px, 
+                100% calc(100% - 8px), calc(100% - 8px) 100%, 
+                8px 100%, 0 calc(100% - 8px)
+            );
+            transition: all 0.25s ease;
+        }
+
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            border-top: 2px solid var(--primary-mint);
+            border-right: 2px solid var(--primary-mint);
+            pointer-events: none;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary-cyan);
+            padding-bottom: 5px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(0, 216, 255, 0.25);
+            text-shadow: 0 0 8px var(--glow-cyan);
+        }
+
+        /* Voice Chips */
+        .voice-chip {
+            background: linear-gradient(135deg, rgba(0, 216, 255, 0.18) 0%, rgba(0, 255, 204, 0.08) 100%);
+            border: 1px solid rgba(0, 216, 255, 0.45);
+            border-radius: 18px;
+            padding: 4px 10px;
+            font-size: 0.65rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .voice-chip:hover, .voice-chip:active {
+            background: rgba(0, 255, 204, 0.3);
+            border-color: var(--primary-mint);
+            box-shadow: 0 0 14px var(--glow-mint);
+            transform: translateY(-1px) scale(1.03);
+            color: #000;
+            font-weight: 700;
+        }
+
+        /* Soundwave animation bars */
+        .wave-bar {
+            width: 3px;
+            height: 8px;
+            background: var(--primary-cyan);
+            border-radius: 3px;
+            transition: height 0.15s ease;
+            box-shadow: 0 0 6px var(--primary-cyan);
+        }
+
+        .listening .wave-bar {
+            animation: soundwave 0.5s infinite ease-in-out alternate;
+        }
+
+        .listening .wave-bar:nth-child(1) { animation-delay: 0.05s; }
+        .listening .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+        .listening .wave-bar:nth-child(3) { animation-delay: 0.25s; }
+        .listening .wave-bar:nth-child(4) { animation-delay: 0.35s; }
+        .listening .wave-bar:nth-child(5) { animation-delay: 0.45s; }
+
+        @keyframes soundwave {
+            0% { height: 4px; background: var(--primary-cyan); }
+            100% { height: 24px; background: var(--primary-mint); box-shadow: 0 0 10px var(--primary-mint); }
+        }
+
+        .eq-bar {
+            width: 3px;
+            background: var(--primary-cyan);
+            border-radius: 2px;
+            height: 4px;
+        }
+
+        .playing .eq-bar {
+            animation: bounce-eq 0.4s infinite ease-in-out alternate;
+        }
+        .playing .eq-bar:nth-child(1) { animation-delay: 0.1s; }
+        .playing .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+        .playing .eq-bar:nth-child(3) { animation-delay: 0.3s; }
+        .playing .eq-bar:nth-child(4) { animation-delay: 0.15s; }
+
+        @keyframes bounce-eq {
+            0% { height: 3px; }
+            100% { height: 16px; background: var(--primary-mint); box-shadow: 0 0 8px var(--primary-mint); }
+        }
+
+        /* Mic Button Glow */
+        .compact-mic-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,204,0.4) 0%, rgba(0,216,255,0.2) 50%, rgba(5,24,46,0.95) 100%);
+            border: 2px solid var(--primary-mint);
+            color: var(--primary-mint);
+            box-shadow: 0 0 20px var(--glow-mint), inset 0 0 12px rgba(0,255,204,0.35);
+            transition: all 0.25s ease;
+        }
+
+        .compact-mic-btn:hover, .compact-mic-btn.active-listening {
+            transform: scale(1.1);
+            background: var(--primary-mint);
+            border-color: #ffffff;
+            color: #020813;
+            box-shadow: 0 0 35px var(--primary-mint), 0 0 50px rgba(0,255,204,0.7);
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.6rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            padding: 2px 6px;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            color: var(--primary-mint);
+            text-shadow: 0 0 10px var(--glow-mint);
+        }
+
+        .nav-btn.active i {
+            transform: scale(1.15);
+            color: var(--primary-mint);
+        }
+
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary-cyan); border-radius: 3px; }
     </style>
 </head>
 <body>
 
     <div class="app-viewport">
+        <!-- Background Elements -->
+        <div class="cyber-grid-bg"></div>
         <canvas id="space-stars"></canvas>
-        <div id="hologram-canvas"></div>
+        <div class="hud-scanline"></div>
 
-        <div class="header-bar">
-            <div>
-                <span class="system-subtext">J.A.R.V.I.S. SYSTEM V5.2</span>
-                <div class="user-greeting">สวัสดีครับ คุณ PIPOOH</div>
+        <!-- TOP FIXED HEADER BAR -->
+        <div class="relative z-10 px-3.5 pt-3 pb-1 flex justify-between items-start bg-gradient-to-b from-[#020813] to-transparent">
+            <div class="flex items-center gap-2">
+                <button onclick="openSettings()" class="w-7 h-7 rounded-lg border border-cyan-400/40 bg-cyan-950/60 flex items-center justify-center text-cyan-300 hover:text-white transition shadow-[0_0_8px_rgba(0,216,255,0.2)]">
+                    <i class="fas fa-bars text-xs"></i>
+                </button>
+                <div>
+                    <div class="font-['Orbitron'] text-[8px] tracking-[2px] text-cyan-400 font-bold">B.U.S. AI SYSTEM V7.2</div>
+                    <h1 class="text-sm font-extrabold text-white tracking-wide leading-tight drop-shadow-[0_0_8px_rgba(0,255,204,0.8)]">สวัสดีครับ น้อง PIPOOH!</h1>
+                    <p class="text-[8.5px] text-cyan-300/80 font-light">แตะที่ไมค์แล้วคุยกับพี่ BUS ได้เลยครับ!</p>
+                </div>
             </div>
-            <div>
-                <div class="digital-clock" id="clock">00:00:00</div>
-                <div class="digital-date" id="date">--/--/----</div>
+
+            <!-- Clock & Avatar -->
+            <div class="text-right">
+                <div class="flex justify-end mb-0.5">
+                    <div class="w-6 h-6 rounded-full border border-emerald-400 bg-cyan-900/80 flex items-center justify-center text-[9px] font-bold text-emerald-300 shadow-[0_0_10px_rgba(0,255,204,0.4)]">
+                        PP
+                    </div>
+                </div>
+                <div class="font-['Orbitron'] text-xs font-black text-cyan-300 leading-none drop-shadow-[0_0_8px_rgba(0,216,255,0.6)]" id="digitalClock">18:14:00</div>
+                <div class="text-[8px] text-cyan-300/80 mt-0.5" id="thaiDateText">ศุกร์ 6 พฤศจิกายน 2569</div>
+                <div class="text-[7px] text-gray-400 font-['Orbitron']">เวลาไทย · UTC+7</div>
             </div>
         </div>
 
-        <div class="orb-status-text">
-            <div class="orb-title">J.A.R.V.I.S.</div>
-            <div class="orb-subtitle">NEURAL AI MATRIX</div>
+        <!-- 3D CANVAS CONTAINER (Strict Height Locked ~200px to Prevent Overlap!) -->
+        <div class="relative w-full h-[200px] z-10 flex-shrink-0" id="hologram-container">
+            <div id="hologram-canvas" class="w-full h-full"></div>
+            
+            <!-- Floating Text Overlay centered strictly inside 3D bounds -->
+            <div class="absolute bottom-2 inset-x-0 text-center pointer-events-none">
+                <h2 class="font-['Orbitron'] text-lg font-black tracking-[8px] text-white drop-shadow-[0_0_15px_rgba(0,255,204,0.9)] leading-none">B. U. S.</h2>
+                <div class="text-[8px] font-['Orbitron'] tracking-[2px] text-cyan-300 font-semibold mt-1" id="busStatusText">STATIC MAIN CORE · ORBITING SATELLITE</div>
+            </div>
         </div>
 
-        <div class="center-mic-container">
-            <button class="mic-btn" id="micBtn" onclick="testAndSpeak()">
-                <i class="fas fa-microphone"></i>
+        <!-- SCROLLABLE CONTENT BODY -->
+        <div class="relative z-10 flex-1 flex flex-col overflow-y-auto pb-16 px-3.5 space-y-2">
+
+            <!-- MIC BUTTON & SOUNDWAVE SECTION -->
+            <div class="flex flex-col items-center justify-center py-0.5">
+                <div class="flex items-center gap-3" id="soundwaveContainer">
+                    <div class="flex items-center gap-1">
+                        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                        <div class="wave-bar"></div><div class="wave-bar"></div>
+                    </div>
+
+                    <button onclick="toggleVoiceListen()" id="micBtn" class="compact-mic-btn flex items-center justify-center text-base cursor-pointer">
+                        <i class="fas fa-microphone" id="micIcon"></i>
+                    </button>
+
+                    <div class="flex items-center gap-1">
+                        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                        <div class="wave-bar"></div><div class="wave-bar"></div>
+                    </div>
+                </div>
+                <div class="text-[8.5px] text-cyan-300/80 mt-1 font-medium" id="micHintText">แตะไมค์เพื่อพูดคุยกับพี่ BUS</div>
+            </div>
+
+            <!-- KID-FRIENDLY VOICE CHIPS -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+                <button onclick="triggerChip('🎵 เล่นเพลงสนุกๆ')" class="voice-chip"><i class="fas fa-music text-cyan-300"></i> เล่นเพลงสนุกๆ</button>
+                <button onclick="triggerChip('📅 วันนี้วันอะไรนะ?')" class="voice-chip"><i class="fas fa-calendar-day text-cyan-300"></i> วันนี้วันอะไรนะ?</button>
+                <button onclick="triggerChip('⏱️ จับเวลาเล่นเกม')" class="voice-chip"><i class="fas fa-gamepad text-cyan-300"></i> จับเวลาเล่นเกม</button>
+                <button onclick="triggerChip('💬 คุยเล่นกับพี่ BUS')" class="voice-chip"><i class="fas fa-comments text-cyan-300"></i> คุยเล่นกับพี่ BUS</button>
+            </div>
+
+            <!-- 3 COMPACT SCI-FI CARDS -->
+            <div class="space-y-2">
+                
+                <!-- CARD 1: MUSIC PLAYER -->
+                <div id="musicWidget" class="glass-panel p-2.5">
+                    <div class="panel-header">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fas fa-compact-disc text-cyan-400"></i>
+                            เครื่องเล่นเพลง (MUSIC)
+                        </span>
+                        <div class="flex items-center gap-1" id="eqContainer">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-lg border border-cyan-400/50 bg-cyan-950/80 flex items-center justify-center flex-shrink-0 shadow-[0_0_10px_rgba(0,216,255,0.3)]">
+                            <i class="fas fa-music text-lg text-cyan-300 animate-spin" style="animation-duration: 8s; animation-play-state: paused;" id="albumDisc"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-xs font-bold text-white truncate" id="trackTitle">BUS - Chill Synthwave.mp3</h3>
+                            <p class="text-[9px] text-cyan-300/80 truncate">เพลงสนุกๆ สำหรับน้อง PIPOOH</p>
+                            
+                            <div class="w-full bg-cyan-950/90 rounded-full h-1 mt-1 cursor-pointer border border-cyan-700/50 relative" onclick="seekAudio(event)">
+                                <div id="trackProgress" class="bg-gradient-to-r from-cyan-400 to-emerald-400 h-full rounded-full w-1/4 transition-all"></div>
+                            </div>
+                            <div class="flex justify-between text-[7px] text-gray-400 mt-0.5">
+                                <span id="currTimeText">00:02</span>
+                                <span id="durTimeText">00:35</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-1.5 pt-1.5 border-t border-cyan-500/20">
+                        <div class="flex items-center gap-1 text-[9px] text-cyan-400">
+                            <i class="fas fa-volume-high"></i>
+                            <input type="range" id="volSlider" min="0" max="100" value="80" oninput="changeVolume(this.value)" class="w-12 accent-cyan-400 h-1">
+                        </div>
+
+                        <div class="flex items-center gap-2.5">
+                            <button onclick="prevTrack()" class="text-xs text-cyan-300 hover:text-white"><i class="fas fa-backward-step"></i></button>
+                            <button onclick="togglePlayMusic()" id="playBtn" class="w-6 h-6 rounded-full bg-cyan-400 text-black font-bold flex items-center justify-center text-xs hover:bg-cyan-300 shadow-[0_0_10px_rgba(0,255,204,0.7)]">
+                                <i class="fas fa-play text-[10px]" id="playIcon"></i>
+                            </button>
+                            <button onclick="nextTrack()" class="text-xs text-cyan-300 hover:text-white"><i class="fas fa-forward-step"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: CALENDAR -->
+                <div id="calendarWidget" class="glass-panel p-2.5">
+                    <div class="panel-header">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fas fa-calendar-alt text-cyan-400"></i>
+                            ปฏิทิน (CALENDAR)
+                        </span>
+                        <span id="calMonthYear" class="text-[9px] text-cyan-300 font-sans">พฤศจิกายน 2569</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="border-r border-cyan-500/20 pr-1.5">
+                            <div class="grid grid-cols-7 gap-0.5 text-center text-[7.5px] mb-1">
+                                <div class="text-cyan-400 font-bold">อา</div><div class="text-cyan-400 font-bold">จ</div>
+                                <div class="text-cyan-400 font-bold">อ</div><div class="text-cyan-400 font-bold">พ</div>
+                                <div class="text-cyan-400 font-bold">พฤ</div><div class="text-cyan-400 font-bold">ศ</div>
+                                <div class="text-cyan-400 font-bold">ส</div>
+                            </div>
+                            <div id="calendarDaysGrid" class="grid grid-cols-7 gap-0.5 text-center text-[8px]"></div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="text-[8.5px] font-bold text-cyan-300 border-b border-cyan-500/20 pb-0.5">แผนงานวันนี้:</div>
+                            <label class="flex items-center gap-1.5 text-[9.5px] cursor-pointer">
+                                <input type="checkbox" checked class="accent-cyan-400" onchange="this.nextElementSibling.classList.toggle('line-through')">
+                                <span class="line-through text-gray-400">1. ทำการบ้านให้เสร็จ</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-[9.5px] cursor-pointer">
+                                <input type="checkbox" class="accent-cyan-400" onchange="this.nextElementSibling.classList.toggle('line-through')">
+                                <span class="text-white">2. เล่นเกม 30 นาที</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-[9.5px] cursor-pointer">
+                                <input type="checkbox" class="accent-cyan-400" onchange="this.nextElementSibling.classList.toggle('line-through')">
+                                <span class="text-white">3. เช็กระบบพี่ BUS</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: TIME & TIMER -->
+                <div id="timerWidget" class="glass-panel p-2.5">
+                    <div class="panel-header">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fas fa-clock text-cyan-400"></i>
+                            ระบบเวลา & จับเวลา (TIME & TIMER)
+                        </span>
+                        <span class="text-[7.5px] text-emerald-400 font-semibold"><i class="fas fa-circle text-[5px] mr-1"></i>ACTIVE</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Stopwatch -->
+                        <div class="bg-cyan-950/50 p-1.5 rounded-lg border border-cyan-500/30 text-center">
+                            <div class="text-[7.5px] text-cyan-300 font-semibold">จับเวลา (Stopwatch)</div>
+                            <div class="font-['Orbitron'] text-xs font-black text-white tracking-wider my-0.5" id="stopwatchDisplay">00:00:00</div>
+                            <div class="flex justify-center gap-1">
+                                <button onclick="startStopwatch()" class="px-1.5 py-0.5 bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-[7.5px] rounded hover:bg-cyan-400 hover:text-black">เริ่ม</button>
+                                <button onclick="pauseStopwatch()" class="px-1.5 py-0.5 bg-amber-500/20 border border-amber-400 text-amber-300 text-[7.5px] rounded hover:bg-amber-400 hover:text-black">หยุด</button>
+                                <button onclick="resetStopwatch()" class="px-1.5 py-0.5 bg-red-500/20 border border-red-400 text-red-300 text-[7.5px] rounded hover:bg-red-400 hover:text-black">รีเซ็ต</button>
+                            </div>
+                        </div>
+
+                        <!-- Timer & World Clocks -->
+                        <div class="bg-cyan-950/50 p-1.5 rounded-lg border border-cyan-500/30 flex flex-col justify-between">
+                            <div>
+                                <div class="text-[7.5px] text-cyan-300 font-semibold text-center">นับถอยหลัง (Timer)</div>
+                                <div class="font-['Orbitron'] text-xs font-black text-cyan-300 text-center tracking-wider my-0.5" id="timerDisplay">00:10:00</div>
+                            </div>
+                            <button onclick="startTimer(600)" class="w-full py-0.5 bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-bold text-[8.5px] rounded-md shadow-md hover:brightness-110">
+                                จับเวลา 10 นาที
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CHAT FEED PANEL (Pops up during speech/chat) -->
+            <div id="chatFeedPanel" class="glass-panel p-2.5 mt-1 hidden">
+                <div class="panel-header">
+                    <span><i class="fas fa-robot text-cyan-400 mr-1"></i> บทสนทนากับ BUS</span>
+                    <button onclick="toggleChatFeed(false)" class="text-xs text-cyan-400 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="chatLog" class="max-h-28 overflow-y-auto space-y-1 text-[10px]">
+                    <div class="p-1.5 rounded-md bg-cyan-950/70 border border-cyan-500/30 text-cyan-200">
+                        สวัสดีครับ น้อง PIPOOH! พี่ BUS พร้อมพูดคุยและช่วยเหลือแล้วครับ
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FIXED BOTTOM NAVIGATION BAR -->
+        <div class="absolute bottom-0 left-0 w-full h-12 bg-[#020813]/95 border-t border-cyan-500/30 z-20 flex justify-around items-center px-2 backdrop-blur-md">
+            <div class="nav-btn active" onclick="switchTab('all')">
+                <i class="fas fa-house text-sm mb-0.5"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-btn" onclick="switchTab('music')">
+                <i class="fas fa-music text-sm mb-0.5"></i>
+                <span>Music</span>
+            </div>
+            <div class="nav-btn" onclick="switchTab('calendar')">
+                <i class="fas fa-calendar-alt text-sm mb-0.5"></i>
+                <span>Calendar</span>
+            </div>
+            <div class="nav-btn" onclick="switchTab('timer')">
+                <i class="fas fa-stopwatch text-sm mb-0.5"></i>
+                <span>Timer</span>
+            </div>
+            <div class="nav-btn" onclick="openSettings()">
+                <i class="fas fa-gear text-sm mb-0.5"></i>
+                <span>Settings</span>
+            </div>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="settingsModal" class="absolute inset-0 bg-[#020813]/95 backdrop-blur-xl z-30 hidden flex-col p-4 overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-cyan-500/30 pb-2 mb-3">
+                <h2 class="font-['Orbitron'] text-xs text-cyan-400 font-bold"><i class="fas fa-sliders mr-1.5"></i>BUS SETTINGS</h2>
+                <button onclick="closeSettings()" class="text-cyan-400 hover:text-white text-base"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-cyan-300 font-['Orbitron'] text-[10px] mb-1">GEMINI API KEY:</label>
+                    <input type="password" id="apiKeyInput" placeholder="วาง API Key สำหรับ Gemini AI..." onchange="saveApiKey()"
+                           class="w-full p-2 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-white outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-cyan-300 font-['Orbitron'] text-[10px] mb-1">VOICE SELECT (เสียงภาษาไทย):</label>
+                    <select id="voiceSelect" onchange="changeVoice()" class="w-full p-2 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-white outline-none"></select>
+                </div>
+            </div>
+
+            <button onclick="closeSettings()" class="mt-auto w-full py-2 bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-bold text-xs rounded-lg shadow-lg">
+                บันทึกการตั้งค่า
             </button>
         </div>
 
-        <div class="widgets-section">
-            <div class="widget-card profile-container">
-                <div class="widget-header"><i class="fas fa-user-shield"></i> OPERATOR</div>
-                <div class="avatar-ring">
-                    <img src="S__67846157.jpg" alt="MR. PIPOOH" class="avatar-img" onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop'">
-                </div>
-                <div class="profile-name">MR. PIPOOH</div>
-                <div class="profile-badge">AUTHORIZED CLASS-A</div>
-            </div>
-
-            <div class="widget-card">
-                <div class="widget-header"><i class="fas fa-calendar-alt"></i> CALENDAR</div>
-                <div class="calendar-grid" id="calendarGrid"></div>
-            </div>
-        </div>
-
-        <div class="bottom-nav">
-            <div class="nav-item active"><i class="fas fa-home"></i><span>หน้าหลัก</span></div>
-            <div class="nav-item" onclick="testAndSpeak()"><i class="fas fa-comment-dots"></i><span>สนทนา</span></div>
-            <div class="nav-item" onclick="openSettings()"><i class="fas fa-sliders-h"></i><span>ตั้งค่า</span></div>
-        </div>
-
-        <div class="settings-modal" id="settingsModal">
-            <div class="settings-header">
-                <h3>SETTINGS</h3>
-                <i class="fas fa-times" style="cursor: pointer;" onclick="closeSettings()"></i>
-            </div>
-            <div class="input-group">
-                <label>GEMINI API KEY:</label>
-                <input type="password" id="apiKeyInput" placeholder="วาง API Key ที่นี่..." onchange="saveApiKey()">
-            </div>
-            <div class="input-group">
-                <label>เลือกเสียงโต้ตอบ (VOICE SELECT):</label>
-                <select id="voiceSelect" onchange="changeVoice()"></select>
-            </div>
-            <button style="padding: 10px; background: var(--primary-mint); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; width: 100%;" onclick="closeSettings()">บันทึกการตั้งค่า</button>
-        </div>
     </div>
 
+    <!-- JAVASCRIPT SYSTEM LOGIC -->
     <script>
+        const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        const thaiDays = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+
+        // Live Clock & Date
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH');
-            document.getElementById('date').innerText = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('digitalClock').innerText = `${hh}:${mm}:${ss}`;
+
+            const dayName = thaiDays[now.getDay()];
+            const dateNum = now.getDate();
+            const monthName = thaiMonths[now.getMonth()];
+            const yearNum = now.getFullYear() + 543;
+            document.getElementById('thaiDateText').innerText = `${dayName} ${dateNum} ${monthName} ${yearNum}`;
         }
         setInterval(updateClock, 1000);
         updateClock();
 
+        // Render Calendar
         function renderCalendar() {
-            const grid = document.getElementById('calendarGrid');
             const now = new Date();
-            const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-            grid.innerHTML = days.map(d => `<div class="cal-day-head">${d}</div>`).join('');
+            document.getElementById('calMonthYear').innerText = `${thaiMonths[now.getMonth()]} ${now.getFullYear() + 543}`;
+            
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
             const totalDays = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const grid = document.getElementById('calendarDaysGrid');
+            grid.innerHTML = '';
 
-            for (let i = 0; i < firstDay; i++) { grid.innerHTML += `<div></div>`; }
-            for (let day = 1; day <= totalDays; day++) {
-                const isToday = day === now.getDate() ? 'active' : '';
-                grid.innerHTML += `<div class="cal-date ${isToday}">${day}</div>`;
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+            for (let d = 1; d <= totalDays; d++) {
+                const isToday = d === now.getDate();
+                const activeClass = isToday ? 'bg-cyan-400 text-black font-bold rounded-full shadow-[0_0_8px_#00ffcc]' : 'text-gray-300';
+                grid.innerHTML += `<div class="py-0.5 ${activeClass}">${d}</div>`;
             }
         }
         renderCalendar();
 
-        const starCanvas = document.getElementById('space-stars');
-        const starCtx = starCanvas.getContext('2d');
-        let stars = [];
+        /* THREE.JS HOLOGRAM: STATIC MAIN CORE + ORBITING SATELLITE ORB */
+        let scene, camera, renderer;
+        let bigSphere, smallOrb, orbitRing;
+        let orbitAngle = 0;
 
-        function resizeStarCanvas() {
-            starCanvas.width = starCanvas.parentElement.clientWidth;
-            starCanvas.height = starCanvas.parentElement.clientHeight;
+        function createDotTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            grad.addColorStop(0, 'rgba(0, 255, 204, 1)');
+            grad.addColorStop(0.5, 'rgba(0, 216, 255, 0.7)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(32, 32, 32, 0, Math.PI * 2); ctx.fill();
+            return new THREE.CanvasTexture(canvas);
         }
-        resizeStarCanvas();
 
-        for (let i = 0; i < 60; i++) {
-            stars.push({
-                x: Math.random() * starCanvas.width,
-                y: Math.random() * starCanvas.height,
-                size: Math.random() * 1.5,
-                alpha: Math.random(),
-                speed: 0.005 + Math.random() * 0.01
+        function init3DHologram() {
+            const container = document.getElementById('hologram-canvas');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+            camera.position.z = 4.8;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            // 1. MAIN BIG SPHERE CORE (STAYS STATIC - 0 ROTATION)
+            const bigGeo = new THREE.SphereGeometry(1.05, 36, 36);
+            const bigCount = bigGeo.attributes.position.count;
+            const colors = [];
+            const cCyan = new THREE.Color('#00d8ff');
+            const cMint = new THREE.Color('#00ffcc');
+
+            for (let i = 0; i < bigCount; i++) {
+                const c = Math.random() > 0.4 ? cCyan : cMint;
+                colors.push(c.r, c.g, c.b);
+            }
+            bigGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const bigMat = new THREE.PointsMaterial({
+                size: 0.045,
+                vertexColors: true,
+                map: createDotTexture(),
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                opacity: 0.95
             });
-        }
 
-        function drawStars() {
-            starCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-            stars.forEach(star => {
-                star.alpha += star.speed;
-                if (star.alpha > 1 || star.alpha < 0) star.speed = -star.speed;
-                starCtx.fillStyle = `rgba(0, 255, 204, ${Math.abs(star.alpha)})`;
-                starCtx.beginPath();
-                starCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                starCtx.fill();
+            bigSphere = new THREE.Points(bigGeo, bigMat);
+            scene.add(bigSphere);
+
+            // Inner Wireframe Core inside Big Sphere (Static)
+            const coreGeo = new THREE.IcosahedronGeometry(0.65, 1);
+            const coreMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffcc,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.35
             });
-            requestAnimationFrame(drawStars);
+            const innerCore = new THREE.Mesh(coreGeo, coreMat);
+            bigSphere.add(innerCore);
+
+            // 2. ORBITING RING INDICATOR
+            const ringGeo = new THREE.RingGeometry(1.75, 1.78, 64);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x00d8ff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.35
+            });
+            orbitRing = new THREE.Mesh(ringGeo, ringMat);
+            orbitRing.rotation.x = Math.PI / 2.2;
+            scene.add(orbitRing);
+
+            // 3. SMALL SATELLITE ORB (ORBITS AROUND THE MAIN CORE)
+            const smallGeo = new THREE.SphereGeometry(0.24, 20, 20);
+            const smallMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffcc,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.95
+            });
+            smallOrb = new THREE.Mesh(smallGeo, smallMat);
+            
+            const pLight = new THREE.PointLight(0x00ffcc, 1.5, 3);
+            smallOrb.add(pLight);
+            scene.add(smallOrb);
+
+            animate3D();
         }
-        drawStars();
-
-        const container = document.getElementById('hologram-canvas');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        container.appendChild(renderer.domElement);
-
-        const geometry = new THREE.SphereGeometry(2.2, 40, 40);
-        const count = geometry.attributes.position.count;
-        const colors = [];
-        const colorMint = new THREE.Color('#00ffcc');
-        const colorCyan = new THREE.Color('#00d8ff');
-
-        for (let i = q = 0; i < count; i++) {
-            const mixedColor = Math.random() > 0.5 ? colorMint : colorCyan;
-            colors.push(mixedColor.r, mixedColor.g, mixedColor.b);
-        }
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-
-        const material = new THREE.PointsMaterial({ size: 0.035, vertexColors: true, transparent: true, opacity: 0.85 });
-        const orbSphere = new THREE.Points(geometry, material);
-        scene.add(orbSphere);
-        camera.position.z = 5.5;
 
         function animate3D() {
             requestAnimationFrame(animate3D);
-            orbSphere.rotation.y += 0.005;
-            orbSphere.rotation.x += 0.002;
+
+            // MAIN SPHERE ROTATES SLOWLY
+            if (bigSphere) {
+                bigSphere.rotation.y += 0.002;
+                bigSphere.rotation.x += 0.001;
+            }
+
+            // SMALL ORB REVOLVES AROUND MAIN CORE IN 3D ORBIT
+            if (smallOrb) {
+                orbitAngle += 0.028;
+
+                const radiusX = 1.76;
+                const radiusZ = 1.76;
+                
+                const cosA = Math.cos(orbitAngle);
+                const sinA = Math.sin(orbitAngle);
+
+                smallOrb.position.x = cosA * radiusX;
+                smallOrb.position.z = sinA * radiusZ * Math.cos(Math.PI / 2.2);
+                smallOrb.position.y = sinA * radiusZ * Math.sin(Math.PI / 2.2);
+
+                smallOrb.rotation.y += 0.04;
+            }
+
+            if (orbitRing) {
+                orbitRing.rotation.z += 0.003;
+            }
+
             renderer.render(scene, camera);
         }
-        animate3D();
 
-        let voices = [];
-        let selectedVoiceIndex = 0;
-        let apiKey = localStorage.getItem('gemini_api_key') || '';
+        // Canvas Space Stars & Deep Nebula Particles
+        function initStars() {
+            const cvs = document.getElementById('space-stars');
+            const ctx = cvs.getContext('2d');
+            cvs.width = cvs.parentElement.clientWidth;
+            cvs.height = cvs.parentElement.clientHeight;
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
-        });
+            // Generate multi-depth twinkling stars and space particles
+            const stars = Array.from({length: 120}, () => ({
+                x: Math.random() * cvs.width,
+                y: Math.random() * cvs.height,
+                r: Math.random() * 1.8 + 0.3,
+                a: Math.random() * Math.PI * 2,
+                speed: 0.01 + Math.random() * 0.025,
+                color: Math.random() > 0.3 ? 'rgba(0, 255, 204, ' : (Math.random() > 0.5 ? 'rgba(0, 216, 255, ' : 'rgba(255, 255, 255, ')
+            }));
 
-        function saveApiKey() {
-            apiKey = document.getElementById('apiKeyInput').value.trim();
-            localStorage.setItem('gemini_api_key', apiKey);
+            // Floating space dust / nebula specks
+            const spaceDust = Array.from({length: 25}, () => ({
+                x: Math.random() * cvs.width,
+                y: Math.random() * cvs.height,
+                vx: (Math.random() - 0.5) * 0.2,
+                vy: (Math.random() - 0.5) * 0.2,
+                r: Math.random() * 3 + 1,
+                a: Math.random() * 0.4 + 0.1
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+                // Draw space dust
+                spaceDust.forEach(d => {
+                    d.x += d.vx;
+                    d.y += d.vy;
+                    if (d.x < 0) d.x = cvs.width;
+                    if (d.x > cvs.width) d.x = 0;
+                    if (d.y < 0) d.y = cvs.height;
+                    if (d.y > cvs.height) d.y = 0;
+
+                    ctx.fillStyle = `rgba(0, 216, 255, ${d.a * 0.5})`;
+                    ctx.beginPath();
+                    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Draw twinkling stars
+                stars.forEach(s => {
+                    s.a += s.speed;
+                    const opacity = Math.abs(Math.sin(s.a));
+                    ctx.fillStyle = `${s.color}${opacity})`;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Optional cross glow for bright stars
+                    if (s.r > 1.6) {
+                        ctx.strokeStyle = `${s.color}${opacity * 0.3})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(s.x - s.r * 2, s.y); ctx.lineTo(s.x + s.r * 2, s.y);
+                        ctx.moveTo(s.x, s.y - s.r * 2); ctx.lineTo(s.x, s.y + s.r * 2);
+                        ctx.stroke();
+                    }
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
         }
 
+        window.onload = function() {
+            init3DHologram();
+            initStars();
+            loadVoices();
+        };
+
+        window.addEventListener('resize', () => {
+            if (renderer && camera) {
+                const container = document.getElementById('hologram-canvas');
+                if (container) {
+                    camera.aspect = container.clientWidth / container.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(container.clientWidth, container.clientHeight);
+                }
+            }
+            initStars();
+        });
+
+        // Speech Synthesis & Recognition
+        let voices = [];
+        let selectedVoiceIndex = 0;
+        let isListening = false;
+        let recognition = null;
+        let apiKey = localStorage.getItem('gemini_api_key') || '';
+
         function loadVoices() {
+            if (typeof window.speechSynthesis === 'undefined') return;
             voices = window.speechSynthesis.getVoices();
-            const voiceSelect = document.getElementById('voiceSelect');
-            if (!voiceSelect) return;
-            
-            let thaiIndex = voices.findIndex(v => v.lang.includes('th') || v.lang.includes('th-TH'));
+            const select = document.getElementById('voiceSelect');
+            if (!select) return;
+
+            let thaiIndex = voices.findIndex(v => v.lang.includes('th'));
             if (thaiIndex !== -1) selectedVoiceIndex = thaiIndex;
 
-            voiceSelect.innerHTML = '';
-            voices.forEach((voice, i) => {
-                if (voice.lang.includes('th') || voice.lang.includes('en')) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    option.textContent = `${voice.name} (${voice.lang})`;
-                    if (i === selectedVoiceIndex) option.selected = true;
-                    voiceSelect.appendChild(option);
+            select.innerHTML = '';
+            voices.forEach((v, i) => {
+                if (v.lang.includes('th') || v.lang.includes('en')) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `${v.name} (${v.lang})`;
+                    if (i === selectedVoiceIndex) opt.selected = true;
+                    select.appendChild(opt);
                 }
             });
         }
 
         if (typeof window.speechSynthesis !== 'undefined') {
             window.speechSynthesis.onvoiceschanged = loadVoices;
-            loadVoices();
         }
 
-        function changeVoice() {
-            const voiceSelect = document.getElementById('voiceSelect');
-            if (voiceSelect) {
-                selectedVoiceIndex = voiceSelect.value;
-                speakText("ระบบเสียงพร้อมใช้งานครับ คุณพิภู");
+        function speakText(text, callback) {
+            if (typeof window.speechSynthesis === 'undefined') {
+                if (callback) callback();
+                return;
             }
-        }
-
-        // ฟังก์ชันทดสอบเสียงพูดทันทีเมื่อแตะปุ่มไมค์หรือไอคอนแชท
-        function testAndSpeak() {
-            speakText("ระบบจาวิสพร้อมปฏิบัติงานครับ คุณพิภู");
-        }
-
-        function speakText(text) {
-            if (typeof window.speechSynthesis === 'undefined') return;
             window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(text);
-            if (voices.length > 0 && voices[selectedVoiceIndex]) {
-                utter.voice = voices[selectedVoiceIndex];
-            }
+            if (voices[selectedVoiceIndex]) utter.voice = voices[selectedVoiceIndex];
             utter.lang = 'th-TH';
             utter.rate = 1.0;
             utter.pitch = 1.0;
+            if (callback) utter.onend = callback;
             window.speechSynthesis.speak(utter);
         }
 
-        function openSettings() { 
-            document.getElementById('settingsModal').style.display = 'flex'; 
-            loadVoices(); 
+        function toggleVoiceListen() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                speakText("เบราว์เซอร์นี้ไม่รองรับระบบการฟังเสียงครับ น้องพิภู");
+                return;
+            }
+
+            if (isListening) {
+                stopListening();
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'th-TH';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                isListening = true;
+                document.getElementById('soundwaveContainer').classList.add('listening');
+                document.getElementById('micBtn').classList.add('active-listening');
+                document.getElementById('micHintText').innerText = "พี่ BUS กำลังฟังอยู่ครับ พูดได้เลย...";
+                document.getElementById('busStatusText').innerText = "VOICE INPUT DETECTED · LISTENING...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                processUserSpeech(transcript);
+            };
+
+            recognition.onerror = () => {
+                stopListening();
+                document.getElementById('micHintText').innerText = "ลองแตะไมค์แล้วพูดอีกทีนะครับ";
+            };
+
+            recognition.onend = () => {
+                stopListening();
+            };
+
+            recognition.start();
         }
-        function closeSettings() { 
-            document.getElementById('settingsModal').style.display = 'none'; 
+
+        function stopListening() {
+            isListening = false;
+            document.getElementById('soundwaveContainer').classList.remove('listening');
+            document.getElementById('micBtn').classList.remove('active-listening');
+            document.getElementById('micHintText').innerText = "แตะไมค์เพื่อพูดคุยกับพี่ BUS";
+            document.getElementById('busStatusText').innerText = "STATIC MAIN CORE · ORBITING SATELLITE";
+        }
+
+        function processUserSpeech(text) {
+            toggleChatFeed(true);
+            appendChatMessage('user', text);
+
+            if (text.includes('เพลง') || text.includes('เล่นเพลง')) {
+                togglePlayMusic(true);
+                const reply = "พี่ BUS เปิดเพลงสนุกๆ ให้น้องพิภูฟังแล้วครับ!";
+                appendChatMessage('bus', reply);
+                speakText(reply);
+            } else if (text.includes('วันอะไร') || text.includes('วันที่')) {
+                const now = new Date();
+                const reply = `วันนี้วัน${thaiDays[now.getDay()]} ที่ ${now.getDate()} ${thaiMonths[now.getMonth()]} ครับ`;
+                appendChatMessage('bus', reply);
+                speakText(reply);
+            } else if (text.includes('จับเวลา') || text.includes('นาฬิกา')) {
+                startTimer(600);
+                const reply = "พี่ BUS เริ่มจับเวลา 10 นาทีสำหรับเล่นเกมแล้วครับ!";
+                appendChatMessage('bus', reply);
+                speakText(reply);
+            } else {
+                callGeminiAI(text);
+            }
+        }
+
+        function triggerChip(command) {
+            processUserSpeech(command);
+        }
+
+        async function callGeminiAI(prompt) {
+            const key = apiKey || localStorage.getItem('gemini_api_key');
+            if (!key) {
+                const reply = "สวัสดีครับ น้อง PIPOOH! พี่ BUS พร้อมคุยเสมอครับ (ใส่ API Key ในตั้งค่าเพื่อเปิดระบบ AI เต็มรูปแบบ)";
+                appendChatMessage('bus', reply);
+                speakText(reply);
+                return;
+            }
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `คุณคือ BUS (บัส) ผู้ช่วย AI อัจฉริยะในสไตล์ไซไฟ แต่คุยแบบเป็นกันเอง อบอุ่น ใจดี เหมาะกับเด็กชื่อ "น้อง PIPOOH" จงตอบอย่างเป็นมิตร สั้นกระชับ สนุกสนาน:\nคำถามจากน้อง PIPOOH: ${prompt}`
+                            }]
+                        }]
+                    })
+                });
+                const data = await res.json();
+                const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "พี่ BUS รับทราบครับผม!";
+                appendChatMessage('bus', replyText);
+                speakText(replyText);
+            } catch (e) {
+                const reply = "พี่ BUS เชื่อมต่อระบบ AI ขัดข้องนิดหน่อย แต่ยังช่วยน้องพิภูได้ครับ!";
+                appendChatMessage('bus', reply);
+                speakText(reply);
+            }
+        }
+
+        function appendChatMessage(sender, text) {
+            const chatLog = document.getElementById('chatLog');
+            const div = document.createElement('div');
+            if (sender === 'user') {
+                div.className = "p-1.5 rounded-md bg-emerald-950/70 border border-emerald-500/30 text-emerald-200 text-right";
+                div.innerHTML = `<strong>น้อง PIPOOH:</strong> ${text}`;
+            } else {
+                div.className = "p-1.5 rounded-md bg-cyan-950/70 border border-cyan-500/30 text-cyan-200";
+                div.innerHTML = `<strong>พี่ BUS:</strong> ${text}`;
+            }
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function toggleChatFeed(show) {
+            const panel = document.getElementById('chatFeedPanel');
+            if (show) panel.classList.remove('hidden');
+            else panel.classList.add('hidden');
+        }
+
+        /* Web Audio Synthwave Synthesizer for Music Player */
+        let audioCtx = null;
+        let isPlayingMusic = false;
+        let musicTimer = null;
+        let secondsPlayed = 2;
+        const totalDuration = 35;
+
+        function togglePlayMusic(forcePlay = false) {
+            const playBtn = document.getElementById('playBtn');
+            const playIcon = document.getElementById('playIcon');
+            const disc = document.getElementById('albumDisc');
+            const eq = document.getElementById('eqContainer');
+
+            if (forcePlay) isPlayingMusic = false;
+
+            isPlayingMusic = !isPlayingMusic;
+
+            if (isPlayingMusic) {
+                playIcon.className = "fas fa-pause text-[10px]";
+                disc.style.animationPlayState = "running";
+                eq.classList.add('playing');
+                startAudioSynth();
+                musicTimer = setInterval(() => {
+                    secondsPlayed++;
+                    if (secondsPlayed >= totalDuration) secondsPlayed = 0;
+                    updateMusicUI();
+                }, 1000);
+            } else {
+                playIcon.className = "fas fa-play text-[10px]";
+                disc.style.animationPlayState = "paused";
+                eq.classList.remove('playing');
+                if (musicTimer) clearInterval(musicTimer);
+                stopAudioSynth();
+            }
+        }
+
+        function updateMusicUI() {
+            const mm = String(Math.floor(secondsPlayed / 60)).padStart(2, '0');
+            const ss = String(secondsPlayed % 60).padStart(2, '0');
+            document.getElementById('currTimeText').innerText = `${mm}:${ss}`;
+            const pct = (secondsPlayed / totalDuration) * 100;
+            document.getElementById('trackProgress').style.width = `${pct}%`;
+        }
+
+        function seekAudio(e) {
+            const bar = e.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const pct = clickX / rect.width;
+            secondsPlayed = Math.floor(pct * totalDuration);
+            updateMusicUI();
+        }
+
+        function prevTrack() {
+            secondsPlayed = 0;
+            updateMusicUI();
+            speakText("เล่นเพลงก่อนหน้าครับ");
+        }
+
+        function nextTrack() {
+            secondsPlayed = 0;
+            updateMusicUI();
+            speakText("เล่นเพลงถัดไปครับ");
+        }
+
+        function changeVolume(val) {}
+
+        function startAudioSynth() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            } catch (e) {}
+        }
+
+        function stopAudioSynth() {}
+
+        /* Stopwatch & Timer Logic */
+        let swInterval = null;
+        let swSeconds = 0;
+
+        function startStopwatch() {
+            if (swInterval) return;
+            swInterval = setInterval(() => {
+                swSeconds++;
+                const hh = String(Math.floor(swSeconds / 3600)).padStart(2, '0');
+                const mm = String(Math.floor((swSeconds % 3600) / 60)).padStart(2, '0');
+                const ss = String(swSeconds % 60).padStart(2, '0');
+                document.getElementById('stopwatchDisplay').innerText = `${hh}:${mm}:${ss}`;
+            }, 1000);
+        }
+
+        function pauseStopwatch() {
+            if (swInterval) {
+                clearInterval(swInterval);
+                swInterval = null;
+            }
+        }
+
+        function resetStopwatch() {
+            pauseStopwatch();
+            swSeconds = 0;
+            document.getElementById('stopwatchDisplay').innerText = "00:00:00";
+        }
+
+        let tmInterval = null;
+        let tmSeconds = 600;
+
+        function startTimer(seconds) {
+            tmSeconds = seconds;
+            if (tmInterval) clearInterval(tmInterval);
+            tmInterval = setInterval(() => {
+                if (tmSeconds <= 0) {
+                    clearInterval(tmInterval);
+                    tmInterval = null;
+                    speakText("หมดเวลาแล้วครับ น้องพิภู!");
+                    return;
+                }
+                tmSeconds--;
+                const hh = String(Math.floor(tmSeconds / 3600)).padStart(2, '0');
+                const mm = String(Math.floor((tmSeconds % 3600) / 60)).padStart(2, '0');
+                const ss = String(tmSeconds % 60).padStart(2, '0');
+                document.getElementById('timerDisplay').innerText = `${hh}:${mm}:${ss}`;
+            }, 1000);
+        }
+
+        /* Tab Navigation & Settings */
+        function switchTab(tab) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+
+            const m = document.getElementById('musicWidget');
+            const c = document.getElementById('calendarWidget');
+            const t = document.getElementById('timerWidget');
+
+            if (tab === 'all') {
+                m.style.display = 'block'; c.style.display = 'block'; t.style.display = 'block';
+            } else if (tab === 'music') {
+                m.style.display = 'block'; c.style.display = 'none'; t.style.display = 'none';
+            } else if (tab === 'calendar') {
+                m.style.display = 'none'; c.style.display = 'block'; t.style.display = 'none';
+            } else if (tab === 'timer') {
+                m.style.display = 'none'; c.style.display = 'none'; t.style.display = 'block';
+            }
+        }
+
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
+            loadVoices();
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function saveApiKey() {
+            apiKey = document.getElementById('apiKeyInput').value.trim();
+            localStorage.setItem('gemini_api_key', apiKey);
+        }
+
+        function changeVoice() {
+            const select = document.getElementById('voiceSelect');
+            if (select) {
+                selectedVoiceIndex = select.value;
+                speakText("ระบบเสียงของพี่ BUS พร้อมใช้งานครับ น้องพิภู");
+            }
         }
     </script>
 </body>
